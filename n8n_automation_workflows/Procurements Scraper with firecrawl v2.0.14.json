@@ -1,0 +1,647 @@
+{
+  "name": "Procurements Scraper with firecrawl v2.0.14",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -1200,
+        528
+      ],
+      "id": "4ee2856b-dc3d-499c-b2b8-5c60ac54ef57",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 3
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -1200,
+        112
+      ],
+      "id": "f740493d-1726-4bfa-9fc2-579a101bdb6e",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "jsCode": "const root = items?.[0]?.json;\nconst roots = Array.isArray(root) ? root : [root].filter(Boolean);\n\nconst asArray = (x) => Array.isArray(x) ? x : (x == null ? [] : [x]);\n\nconst fromEntry = (entry) =>\n  entry?.extracted?.procurements ||\n  entry?.json?.procurements ||\n  entry?.procurements ||\n  entry?.result?.data?.procurements ||\n  entry?.result?.procurements ||\n  [];\n\n// flatten across all root record\nlet list = [];\nfor (const r of roots) {\n  if (r?.data?.procurements) {\n    list = list.concat(asArray(r.data.procurements));\n  }\n\n  // top-level fallback\n  const top =\n    r?.extracted?.procurements ||\n    r?.json?.procurements ||\n    r?.procurements ||\n    [];\n  list = list.concat(asArray(top));\n\n  // scan each in case thr resp r.data is an array of entries  from Firecrawl \n  const dataArr = asArray(r?.data);\n  if (dataArr.length && !r?.data?.procurements) {\n    for (const e of dataArr) list = list.concat(asArray(fromEntry(e)));\n  }\n}\n\n// Stable ID helper\nfunction hash(str) {\n  let h = 0;\n  for (let i = 0; i < str.length; i++) { h = ((h << 5) - h) + str.charCodeAt(i); h |= 0; }\n  return String(h);\n}\n\nconst now = new Date().toISOString();\n\nreturn list.map(p => ({\n  json: {\n    id: hash(`${p.detail_page_url || ''}|${p.title || ''}`),\n    title: p.title || '',\n    description: p.description || '',\n    deadline: p.deadline || '',\n    published_date: p.published_date || '',\n    detail_page_url: p.detail_page_url || '',\n    status: p.status || '',        \n    first_seen: now,\n  }\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        976,
+        320
+      ],
+      "id": "015cbbd0-330e-4ef4-bbc0-bd09c189f45b",
+      "name": "Get list of procurements"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "f1dc5831-d578-41ce-8788-2726a631aaf8",
+              "leftValue": "={{$items('write to sheets').length > 0}}\n",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1280,
+        288
+      ],
+      "id": "51467ab1-be3b-4d7c-a912-36f69d76f8fc",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "mode": "chooseBranch"
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1568,
+        288
+      ],
+      "id": "8fecd8f2-a8fe-4795-83b4-56fd96cc4081",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value":  "[YOUR_SPREADSHEET_ID]",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 282238185,
+          "mode": "list",
+          "cachedResultName": "byFirecrawl",
+          "cachedResultUrl":  "[YOUR_SPREADSHEET_ID]"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ $json.id }}",
+            "deadline": "={{ $json.deadline }}",
+            "published_date": "={{ $json.published_date }}",
+            "status": "={{ $json.status }}",
+            "detail_page_url": "={{ $json.detail_page_url }}",
+            "description": "={{ $json.description }}",
+            "title": "={{ $json.title }}"
+          },
+          "matchingColumns": [
+            "title"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "title",
+              "displayName": "title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "deadline",
+              "displayName": "deadline",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "description",
+              "displayName": "description",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "published_date",
+              "displayName": "published_date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "detail_page_url",
+              "displayName": "detail_page_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        1152,
+        -112
+      ],
+      "id": "a111f028-65fa-4676-ab6c-5a7f01477628",
+      "name": "write to sheets",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "j8HdeyRSW28UbL9Q",
+          "name": "Google Sheets API Credential "
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Hur många sidor du vill skrapa totalt\nconst startPage = 1;\nconst maxPages = $input.first().json.totalPages; // this is auto\nconst base = \"https://app.mercell.com/search?keywords=it&filter=delivery_place_code%3ASE&page=\";\nconst allUrls = Array.from({ length: maxPages }, (_, i) => base + (startPage + i));\n\nfunction chunk(arr, size) {\n  const out = [];\n  for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));\n  return out;\n}\nconst batches = chunk(allUrls, 2);\n\nreturn batches.map((urls, idx) => ({\n  json: { urls, batch: idx + 1, totalBatches: batches.length }\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -736,
+        320
+      ],
+      "id": "e59c482f-a143-45b0-8d44-4c7a62f4d4c6",
+      "name": "Build URL list"
+    },
+    {
+      "parameters": {
+        "jsCode": "const src = items[0].json || {};\nconst id = (src.id || src.jobId || src.data?.id || src.data?.jobId || '').trim();\nif (!id) throw new Error('Firecrawl job id not found');\nreturn [{ json: { id } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -176,
+        128
+      ],
+      "id": "bb41aa91-af7d-4394-a4bc-9c4ba8745494",
+      "name": "Pick job id"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.firecrawl.dev/v1/extract",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer [YOUR_FIRECRAWL_API_KEY]"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{\n  {\n    enableWebSearch: false,\n    ignoreSitemap: false,\n    includeSubdomains: false,\n    showSources: false,\n    scrapeOptions: { formats: ['markdown'] },\n    ignoreInvalidURLs: false,\n    // Måste vara den aktuella buntens urls (≤10)\n    urls: Array.isArray($json.urls) ? $json.urls : [],\n    prompt: 'Extract EVERY procurement card visible on the page(s). Include the title, deadline, published date, URL to detail page. Do not skip any card. If a field is missing, return an empty string.',\n    schema: {\n      type: 'object',\n      properties: {\n        procurements: {\n          type: 'array',\n          items: {\n            type: 'object',\n            properties: {\n              title: { type: 'string' },\n              deadline: { type: 'string' },\n              published_date: { type: 'string' },\n              detail_page_url: { type: 'string' },\n              status: { type: 'string' },\n            },\n            required: ['title', 'detail_page_url'],\n          },\n        },\n      },\n      required: ['procurements'],\n    },\n  }\n}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -384,
+        320
+      ],
+      "id": "978e8741-156a-4e78-9aeb-2ed70c5c51de",
+      "name": "Firecrawl – POST /extract"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.firecrawl.dev/v1/extract/{{$json.id}}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer Bearer [YOUR_FIRECRAWL_API_KEY]"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        192,
+        112
+      ],
+      "id": "00c6237a-41cf-430f-a45f-9915d01b5973",
+      "name": "Firecrawl – GET /extract/:id"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -560,
+        112
+      ],
+      "id": "75858ea6-0a62-4d57-a271-ebaf67261ee8",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Skicka bara 1 kontroll-item tillbaka till Continue\nreturn [{ json: { go: true } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        192,
+        -160
+      ],
+      "id": "617059a9-ca42-4360-8c8f-294752bafadc",
+      "name": "Signal next batch"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "33c88a2a-2ba4-4447-a5ce-93796e277eec",
+              "leftValue": "={{ $json.status === 'completed' && Array.isArray($json.data?.procurements) && $json.data.procurements.some(p => p && Object.keys(p).length > 0) }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        704,
+        336
+      ],
+      "id": "fdf88b94-cb4c-41c2-855b-e881df938510",
+      "name": "Complete and has itms"
+    },
+    {
+      "parameters": {
+        "url": "https://search-service-api.discover.app.mercell.com/public/api/v1/search?filter=delivery_place_code%3ASE&keywords=it&page=1",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1088,
+        304
+      ],
+      "id": "c1ae73de-80d4-4fe9-83a2-50ba34c310bf",
+      "name": "Get First Page [to get the total pages]"
+    },
+    {
+      "parameters": {
+        "jsCode": "const totalItems = $json.numRes;\nconst pagSize = $json.pageSize || 20;\nconst totalPages = Math.max(1, Math.ceil(totalItems / pagSize));\n\nreturn [{ json: { totalPages } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -896,
+        96
+      ],
+      "id": "c7cb0b27-aafa-4de8-8f89-18633c6f5f7c",
+      "name": "Compute Total Pages"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        352,
+        336
+      ],
+      "id": "07340d4b-f29c-4f35-9e4e-f989fda93236",
+      "name": "Carry job id"
+    },
+    {
+      "parameters": {
+        "amount": 120
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        -16,
+        336
+      ],
+      "id": "bc0f8546-5b89-4411-b9a9-80497934cb7b",
+      "name": "wait batch  [120s]",
+      "webhookId": "0eae26c8-1a7b-48bc-a6f3-c362b9cd5015"
+    },
+    {
+      "parameters": {
+        "amount": 20,
+        "unit": "seconds"
+      },
+      "id": "64d30338-fdd2-4b9d-b7c5-c117504916f7",
+      "name": "Retry Wait [20s]",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [
+        688,
+        128
+      ],
+      "webhookId": "a96eb309-f553-4b6b-8578-e6027d96ba1e"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Get First Page [to get the total pages]",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get First Page [to get the total pages]",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get list of procurements": {
+      "main": [
+        [
+          {
+            "node": "write to sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "write to sheets": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Signal next batch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build URL list": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pick job id": {
+      "main": [
+        [
+          {
+            "node": "wait batch  [120s]",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Carry job id",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Firecrawl – POST /extract": {
+      "main": [
+        [
+          {
+            "node": "Pick job id",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Firecrawl – GET /extract/:id": {
+      "main": [
+        [
+          {
+            "node": "Carry job id",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Firecrawl – POST /extract",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Complete and has itms": {
+      "main": [
+        [
+          {
+            "node": "Get list of procurements",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Retry Wait [20s]",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Signal next batch": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get First Page [to get the total pages]": {
+      "main": [
+        [
+          {
+            "node": "Compute Total Pages",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compute Total Pages": {
+      "main": [
+        [
+          {
+            "node": "Build URL list",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Carry job id": {
+      "main": [
+        [
+          {
+            "node": "Complete and has itms",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "wait batch  [120s]": {
+      "main": [
+        [
+          {
+            "node": "Firecrawl – GET /extract/:id",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Retry Wait [20s]": {
+      "main": [
+        [
+          {
+            "node": "Firecrawl – GET /extract/:id",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "7653a900-8238-4de3-88b9-3bbbcece426e",
+  "meta": {
+    "instanceId": "1812776eece5618a48babc1b6661700aa488608e4a0bff01ab2b4210c87a62d6"
+  },
+  "id": "3EUImqvj6CZCASDw",
+  "tags": [
+    {
+      "createdAt": "2025-08-15T15:08:49.644Z",
+      "updatedAt": "2025-08-15T15:08:49.644Z",
+      "id": "NPJ0QLPB0fmtCiyC",
+      "name": "scraper"
+    }
+  ]
+}
