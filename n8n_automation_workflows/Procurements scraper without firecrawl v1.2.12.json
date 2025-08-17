@@ -1,0 +1,458 @@
+{
+  "name": "Procurements scraper without firecrawl",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -272,
+        304
+      ],
+      "id": "ab5d73f1-0e21-41ca-bab1-e604dd7ea79b",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 3
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -272,
+        496
+      ],
+      "id": "362b4f86-60aa-4c4f-b2ab-8224c5872024",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "f1dc5831-d578-41ce-8788-2726a631aaf8",
+              "leftValue": "={{$items('write to sheets').length > 0}}\n",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1296,
+        416
+      ],
+      "id": "14a3ac09-ebee-48b4-b47d-92948d6ccf26",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "mode": "chooseBranch"
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1552,
+        416
+      ],
+      "id": "c6eb8730-9e6d-49e5-bb60-0692cba5e7f0",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "[YOUR_SPREADSHEET_ID]",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1983631835,
+          "mode": "list",
+          "cachedResultName": "nativeApi",
+          "cachedResultUrl":  "[YOUR_SPREADSHEET_ID]",
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ $json.id }}",
+            "deadline": "={{ $json.deadline }}",
+            "published_date": "={{ $json.published_date }}",
+            "status": "={{ $json.status }}",
+            "description": "={{ $json.description }}",
+            "title": "={{ $json.title }}",
+            "detail_page_url": "={{ $json.detail_page_url }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "title",
+              "displayName": "title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "deadline",
+              "displayName": "deadline",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "description",
+              "displayName": "description",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "published_date",
+              "displayName": "published_date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "detail_page_url",
+              "displayName": "detail_page_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        1104,
+        416
+      ],
+      "id": "ddd14750-fa61-4201-8816-4f3d30600477",
+      "name": "write to sheets",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "j8HdeyRSW28UbL9Q",
+          "name": "Google Sheets API Credential "
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const n = $json.totalPages;\nreturn Array.from({ length: n }, (_, i) => ({ json: { page: i+1 } }));\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        336,
+        400
+      ],
+      "id": "b73b8f46-3598-4242-b5cc-15cafb21fca2",
+      "name": "Build URL list"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        512,
+        400
+      ],
+      "id": "c9de2135-f1d3-49c5-9c49-201db4cb2efb",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Skicka bara 1 kontroll-item tillbaka till Continue\nreturn [{ json: { go: true } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1104,
+        208
+      ],
+      "id": "f34663b9-38a0-4d08-8cae-6659e310c77b",
+      "name": "Signal next batch"
+    },
+    {
+      "parameters": {
+        "url": "https://search-service-api.discover.app.mercell.com/public/api/v1/search?filter=delivery_place_code%3ASE&keywords=it&page=1",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -16,
+        400
+      ],
+      "id": "5103e537-d18f-48e4-9e34-64f178c26d64",
+      "name": "Get First Page [to get the total pages]"
+    },
+    {
+      "parameters": {
+        "jsCode": "const totalItems = $json.numRes;\nconst pagSize = $json.pageSize || 20;\nconst totalPages = Math.max(1, Math.ceil(totalItems / pagSize));\n\nreturn [{ json: { totalPages } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        176,
+        400
+      ],
+      "id": "60af8a9f-8354-4463-a007-f29d02837fd9",
+      "name": "Compute Total Pages"
+    },
+    {
+      "parameters": {
+        "url": "https://search-service-api.discover.app.mercell.com/public/api/v1/search",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "filter",
+              "value": "delivery_place_code:SE"
+            },
+            {
+              "name": "keywords",
+              "value": "it"
+            },
+            {
+              "name": "lng",
+              "value": "en"
+            },
+            {
+              "name": "page",
+              "value": "={{$json.page}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        720,
+        416
+      ],
+      "id": "36cee798-33e6-4500-b134-88300a39fdad",
+      "name": "Get Page Data"
+    },
+    {
+      "parameters": {
+        "jsCode": "const page = $json.page ?? 1;\n\nconst htmlDecode = s => (s || \"\")\n  .replace(/&amp;/g,\"&\").replace(/&lt;/g,\"<\").replace(/&gt;/g,\">\")\n  .replace(/&quot;/g,'\"').replace(/&#39;/g,\"'\");\nconst stripHtml = s => s.replace(/<[^>]*>/g,\" \").replace(/\\s+/g,\" \").trim();\nconst truncate = (s, n=500) => s.length > n ? s.slice(0, n-1) + \"…\" : s;\n\nconst out = [];\nfor (const r of ($json.results || [])) {\n  out.push({\n    json: {\n      id: String(r.id ?? \"\"),\n      title: r.title ?? null,\n      deadline: r.deadline ?? null,\n      description: truncate(stripHtml(htmlDecode(r.description ?? \"\"))),\n      published_date: r.publicationDate ?? null,\n      //build the Mercell detail page\n      detail_page_url:\n        `https://app.mercell.com/tender/${encodeURIComponent(String(r.id ?? \"\"))}` +\n        `?keywords=it&filter=${encodeURIComponent('delivery_place_code:SE')}&page=${page}`,\n      status: r.tenderStatus ?? null,\n    }\n  });\n}\nreturn out;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        912,
+        416
+      ],
+      "id": "729f6aed-f032-4b7c-85d0-426d2de7da02",
+      "name": "Mapping and build the detailURLs"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Get First Page [to get the total pages]",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get First Page [to get the total pages]",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "write to sheets": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Signal next batch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build URL list": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Get Page Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Signal next batch": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get First Page [to get the total pages]": {
+      "main": [
+        [
+          {
+            "node": "Compute Total Pages",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compute Total Pages": {
+      "main": [
+        [
+          {
+            "node": "Build URL list",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Page Data": {
+      "main": [
+        [
+          {
+            "node": "Mapping and build the detailURLs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mapping and build the detailURLs": {
+      "main": [
+        [
+          {
+            "node": "write to sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "ab0bdc3a-4ead-49c4-a7f9-58509bf18d34",
+  "meta": {
+    "instanceId": "1812776eece5618a48babc1b6661700aa488608e4a0bff01ab2b4210c87a62d6"
+  },
+  "id": "qBDI6lowO7a0c5E6",
+  "tags": [
+    {
+      "createdAt": "2025-08-15T15:08:49.644Z",
+      "updatedAt": "2025-08-15T15:08:49.644Z",
+      "id": "NPJ0QLPB0fmtCiyC",
+      "name": "scraper"
+    }
+  ]
+}
