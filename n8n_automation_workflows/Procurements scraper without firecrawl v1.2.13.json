@@ -92,7 +92,7 @@
           "value": 1983631835,
           "mode": "list",
           "cachedResultName": "nativeApi",
-          "cachedResultUrl":  "[YOUR_SPREADSHEET_ID]",
+          "cachedResultUrl":  "[YOUR_SPREADSHEET_ID]"
         },
         "columns": {
           "mappingMode": "defineBelow",
