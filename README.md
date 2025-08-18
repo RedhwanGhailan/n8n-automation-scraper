@@ -87,7 +87,7 @@ Remove `status` **optional** not required and **remove** field description.
 ---
 
 ## Check the resuls under this link:
-[text](https://docs.google.com/spreadsheets/d/1GK0M4PQMgcdkiA4h4SykACH_MFdg-VoHWsdUrM-uh5M/edit?usp=sharing)
+[spreedsheet result](https://docs.google.com/spreadsheets/d/1GK0M4PQMgcdkiA4h4SykACH_MFdg-VoHWsdUrM-uh5M/edit?usp=sharing)
 ## Future enhancements
 - Add a **max-tries counter** and a fallback to **single-page jobs** if a 2-page batch returns suspiciously few items (e.g., `< 36`).
 - Second-pass `description`, consider fetching it from each `detail_page_url` in a **second pass** to avoid list truncation.
