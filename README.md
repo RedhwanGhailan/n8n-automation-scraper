@@ -82,8 +82,13 @@ Remove `status` **optional** not required and **remove** field description.
 
 ---
 
-## Nodes map daigram
+## Nodes map diagram
 ![alt text](<Daigram Procurements Scraper with firecrawl v2.0.14.png>)
+---
+
+## How TO RUN the workflow
+> Fetch the workflow you want to import, in n8n improt the workflow and make sure to replace the credential to Firecrawl and Google spreedshets.
+> Make sure to replace the link '[YOUR_SPREADSHEET_ID]' with your spreadsheet at the node "write to sheets"
 ---
 
 ## Check the resuls under this link:
